@@ -20,10 +20,9 @@ const state = {
 };
 
 function render(ctx, board, timestamp) {
-    console.log("render: ", timestamp);
     for (let y = 0; y < board.h; y++) {
         for (let x = 0; x < board.w; x++) {
-            if (board.data[y * board.h + x] == 1) {
+            if (board.data[y * board.w + x]) {
                 ctx.fillStyle = style.cell.alive;
             } else {
                 ctx.fillStyle = style.cell.dead;
@@ -34,8 +33,8 @@ function render(ctx, board, timestamp) {
 }
 
 function step(ctx, board, timestamp) {
-    render(ctx, board, timestamp);
     _goli_step(board.data, board.x, board.y);
+    render(ctx, board, timestamp);
 }
 
 function loop(state, ctx, board) {
@@ -47,6 +46,11 @@ function loop(state, ctx, board) {
     }
 }
 
+function set_canvas_size(cvs, board) {
+    cvs.width = board.w * style.cell.size;
+    cvs.height = board.h * style.cell.size;
+}
+
 function main() {
     _goli_init();
     const board = {
@@ -54,11 +58,13 @@ function main() {
         w: _goli_get_width(),
         h: _goli_get_height(),
     };
-    
+    console.log(board);
+    set_canvas_size(elements.canvas, board);
     const ctx = elements.canvas.getContext("2d");
-    // TODO: init canvas size
 
+    render(ctx, board, Date.now());
     elements.controls.step_button.addEventListener("click", () => {
+        board.data = new Uint8Array(Module.buffer, _goli_get_board())
         step(ctx, board, Date.now());
     });
 

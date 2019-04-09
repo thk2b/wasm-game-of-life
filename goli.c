@@ -1,19 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
+#include <assert.h>
 
 #include <emscripten/emscripten.h>
 
 typedef unsigned char byte;
 
-#define WIDTH 100
-#define HEIGHT 75
+#define WIDTH 125
+#define HEIGHT 100
+#define BOARD_SIZE (WIDTH * HEIGHT)
 
-static byte board[HEIGHT * WIDTH];
+static byte boards[2][BOARD_SIZE];
+static size_t active_board_idx = 0;
 
 EMSCRIPTEN_KEEPALIVE
 byte *goli_get_board(void) {
-	return board;
+	return boards[active_board_idx];
 }
 
 EMSCRIPTEN_KEEPALIVE
@@ -28,20 +32,75 @@ size_t goli_get_height(void) {
 
 EMSCRIPTEN_KEEPALIVE
 void goli_init(void) {
-	memset(board, 0, HEIGHT * WIDTH);
-	board[0] = 1;
-	board[10 * 10] = 1;
-	board[11 * 10] = 1;
-	board[12 * 10] = 1;
-	board[13 * 10] = 1;
+	memset(boards, 0, BOARD_SIZE * 2);
+	memset(boards[active_board_idx] + WIDTH, 1, WIDTH);
+	// boards[active_board_idx][0] = 1;
+	// boards[active_board_idx][1] = 1;
+	// boards[active_board_idx][WIDTH - 1] = 1;
+	// boards[active_board_idx][BOARD_SIZE - 1] = 1;
+}
+
+/* represents the 8 directions [y, x]*/
+#define DIR_X 1
+#define DIR_Y 0
+static char directions[8][2] = {
+	{-1, -1}, {-1, 0}, {-1, 1},
+	{ 0, -1},          { 0, 1},
+	{ 1, -1}, { 1, 0}, { 1, 1}
+};
+
+static inline byte is_cell_alive(byte *board, int x, int y) {
+	if (x < 0 || x > WIDTH || y < 0 || y > HEIGHT) {
+		return 0;
+	}
+	return board[y * WIDTH + x];
+}
+
+static size_t count_alive_neighbors(byte *board, size_t i) {
+	int x = i % WIDTH;
+	int y = i / WIDTH;
+	size_t count = 0;
+	for (size_t d = 0; d < 8; d++) {
+		char *direction = directions[d];
+		if (is_cell_alive(board, x + direction[DIR_X], y + direction[DIR_Y])) {
+			count++;
+		}
+	}
+	return count;
+}
+
+static inline void update_alive_cell(byte *board, byte *next_board, size_t i, size_t neighbors){
+	assert(board[i] == 1);
+	if (neighbors < 2 || neighbors > 3) {
+		next_board[i] = 0;
+	} else {
+		next_board[i] = 1;
+	}
+}
+
+static inline void update_dead_cell(byte *board, byte *next_board, size_t i, size_t neighbors) {
+	assert(board[i] == 0);
+	if (neighbors == 3) {
+		next_board[i] = 1;
+	} else {
+		next_board[i] = 0;
+	}
 }
 
 EMSCRIPTEN_KEEPALIVE
-void goli_step(void/*byte *board, size_t h, size_t w*/) {
-	size_t limit = WIDTH * HEIGHT;
-	for (size_t i = 0; i < limit; i++) {
-		board[i] = board[i] == 1 ? 0 : 1;
+void goli_step(void) {
+	byte *board = boards[active_board_idx];
+	byte *next_board = boards[!active_board_idx];
+
+	for (size_t i = 0; i < BOARD_SIZE; i++) {
+		size_t neighbors = count_alive_neighbors(board, i);
+		if (board[i] == 1) {
+			update_alive_cell(board, next_board, i, neighbors);
+		} else {
+			update_dead_cell(board, next_board, i, neighbors);
+		}
 	}
+	active_board_idx = !active_board_idx;
 }
 
 int main() {
