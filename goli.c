@@ -8,8 +8,8 @@
 
 typedef unsigned char byte;
 
-#define WIDTH 125
-#define HEIGHT 100
+#define WIDTH 50
+#define HEIGHT 50
 #define BOARD_SIZE (WIDTH * HEIGHT)
 
 static byte boards[2][BOARD_SIZE];
@@ -33,11 +33,8 @@ size_t goli_get_height(void) {
 EMSCRIPTEN_KEEPALIVE
 void goli_init(void) {
 	memset(boards, 0, BOARD_SIZE * 2);
-	memset(boards[active_board_idx] + WIDTH, 1, WIDTH);
-	// boards[active_board_idx][0] = 1;
-	// boards[active_board_idx][1] = 1;
-	// boards[active_board_idx][WIDTH - 1] = 1;
-	// boards[active_board_idx][BOARD_SIZE - 1] = 1;
+	memset(boards[active_board_idx] + (HEIGHT / 2 - 1) * WIDTH, 1, WIDTH);
+	memset(boards[active_board_idx] + (HEIGHT / 2 + 1) * WIDTH, 1, WIDTH);
 }
 
 /* represents the 8 directions [y, x]*/
@@ -49,11 +46,16 @@ static char directions[8][2] = {
 	{ 1, -1}, { 1, 0}, { 1, 1}
 };
 
+// #define WRAPS
 static inline byte is_cell_alive(byte *board, int x, int y) {
-	if (x < 0 || x > WIDTH || y < 0 || y > HEIGHT) {
+#ifdef WRAPS
+	return board[((y % WIDTH) * WIDTH + (x % HEIGHT))]; // TODO: Fixme
+#else
+	if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) {
 		return 0;
 	}
 	return board[y * WIDTH + x];
+#endif
 }
 
 static size_t count_alive_neighbors(byte *board, size_t i) {

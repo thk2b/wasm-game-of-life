@@ -30,10 +30,17 @@ function render(ctx, board, timestamp) {
             ctx.fillRect(x * style.cell.size, y * style.cell.size, style.cell.size, style.cell.size);
         }
     }
+    console.log('render took', Date.now() - timestamp);
+}
+
+function time(msg, cb) {
+    const begin = Date.now();
+    cb();
+    console.log(msg, Date.now() - begin);
 }
 
 function step(ctx, board, timestamp) {
-    _goli_step(board.data, board.x, board.y);
+    time('step took:', () => _goli_step(board.data, board.x, board.y));
     render(ctx, board, timestamp);
 }
 
