@@ -8,8 +8,8 @@
 
 typedef unsigned char byte;
 
-#define WIDTH 50
-#define HEIGHT 50
+#define WIDTH 500
+#define HEIGHT 500
 #define BOARD_SIZE (WIDTH * HEIGHT)
 
 static byte boards[2][BOARD_SIZE];

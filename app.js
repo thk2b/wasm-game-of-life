@@ -1,6 +1,6 @@
 const style = {
     cell: {
-        size: 10,
+        size: 2,
         alive: 'green',
         dead: 'blue'
     }
@@ -12,11 +12,15 @@ const elements = {
         run_button: document.getElementById("controls_run"),
     },
     canvas: document.getElementById("canvas"),
+    metrics: {
+        render: document.getElementById("metrics_render"),
+        update: document.getElementById("metrics_update"),
+    }
 };
 
 const state = {
     running: false,
-    fps: 15
+    // fps: 1
 };
 
 function render(ctx, board, timestamp) {
@@ -30,18 +34,18 @@ function render(ctx, board, timestamp) {
             ctx.fillRect(x * style.cell.size, y * style.cell.size, style.cell.size, style.cell.size);
         }
     }
-    console.log('render took', Date.now() - timestamp);
 }
 
-function time(msg, cb) {
-    const begin = Date.now();
+function time(el, cb) {
+    const begin = performance.now();
     cb();
-    console.log(msg, Date.now() - begin);
+    const ms = performance.now() - begin;
+    el.innerHTML = ms.toString();
 }
 
 function step(ctx, board, timestamp) {
-    time('step took:', () => _goli_step(board.data, board.x, board.y));
-    render(ctx, board, timestamp);
+    time(elements.metrics.update, () => _goli_step(board.data, board.x, board.y));
+    time(elements.metrics.render, () => render(ctx, board, timestamp));
 }
 
 function loop(state, ctx, board) {
@@ -65,14 +69,13 @@ function main() {
         w: _goli_get_width(),
         h: _goli_get_height(),
     };
-    console.log(board);
     set_canvas_size(elements.canvas, board);
     const ctx = elements.canvas.getContext("2d");
 
-    render(ctx, board, Date.now());
+    render(ctx, board, performance.now());
     elements.controls.step_button.addEventListener("click", () => {
         board.data = new Uint8Array(Module.buffer, _goli_get_board())
-        step(ctx, board, Date.now());
+        step(ctx, board, performance.now());
     });
 
     elements.controls.run_button.addEventListener("click", () => {
