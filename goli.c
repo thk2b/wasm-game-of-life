@@ -6,17 +6,15 @@
 
 #include <emscripten/emscripten.h>
 
-typedef unsigned char byte;
-
-#define WIDTH 500
-#define HEIGHT 500
+#define WIDTH 2000
+#define HEIGHT 2000
 #define BOARD_SIZE (WIDTH * HEIGHT)
 
-static byte boards[2][BOARD_SIZE];
+static uint8_t boards[2][BOARD_SIZE];
 static size_t active_board_idx = 0;
 
 EMSCRIPTEN_KEEPALIVE
-byte *goli_get_board(void) {
+uint8_t *goli_get_board(void) {
 	return boards[active_board_idx];
 }
 
@@ -47,7 +45,7 @@ static char directions[8][2] = {
 };
 
 // #define WRAPS
-static inline byte is_cell_alive(byte *board, int x, int y) {
+static inline uint8_t is_cell_alive(uint8_t *board, int x, int y) {
 #ifdef WRAPS
 	return board[((y % WIDTH) * WIDTH + (x % HEIGHT))]; // TODO: Fixme
 #else
@@ -58,7 +56,7 @@ static inline byte is_cell_alive(byte *board, int x, int y) {
 #endif
 }
 
-static size_t count_alive_neighbors(byte *board, size_t i) {
+static size_t count_alive_neighbors(uint8_t *board, size_t i) {
 	int x = i % WIDTH;
 	int y = i / WIDTH;
 	size_t count = 0;
@@ -71,7 +69,7 @@ static size_t count_alive_neighbors(byte *board, size_t i) {
 	return count;
 }
 
-static inline void update_alive_cell(byte *board, byte *next_board, size_t i, size_t neighbors){
+static inline void update_alive_cell(uint8_t *board, uint8_t *next_board, size_t i, size_t neighbors){
 	assert(board[i] == 1);
 	if (neighbors < 2 || neighbors > 3) {
 		next_board[i] = 0;
@@ -80,7 +78,7 @@ static inline void update_alive_cell(byte *board, byte *next_board, size_t i, si
 	}
 }
 
-static inline void update_dead_cell(byte *board, byte *next_board, size_t i, size_t neighbors) {
+static inline void update_dead_cell(uint8_t *board, uint8_t *next_board, size_t i, size_t neighbors) {
 	assert(board[i] == 0);
 	if (neighbors == 3) {
 		next_board[i] = 1;
@@ -91,8 +89,8 @@ static inline void update_dead_cell(byte *board, byte *next_board, size_t i, siz
 
 EMSCRIPTEN_KEEPALIVE
 void goli_step(void) {
-	byte *board = boards[active_board_idx];
-	byte *next_board = boards[!active_board_idx];
+	uint8_t *board = boards[active_board_idx];
+	uint8_t *next_board = boards[!active_board_idx];
 
 	for (size_t i = 0; i < BOARD_SIZE; i++) {
 		size_t neighbors = count_alive_neighbors(board, i);

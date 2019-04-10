@@ -1,6 +1,6 @@
 const style = {
     cell: {
-        size: 2,
+        size: 1,
         alive: 'green',
         dead: 'blue'
     }
@@ -15,6 +15,7 @@ const elements = {
     metrics: {
         render: document.getElementById("metrics_render"),
         update: document.getElementById("metrics_update"),
+        total: document.getElementById("metrics_total"),
     }
 };
 
@@ -23,7 +24,22 @@ const state = {
     // fps: 1
 };
 
-function render(ctx, board, timestamp) {
+function render(ctx, board) {
+    const img_size = board.h * board.w * 4;
+    const img = ctx.getImageData(0, 0, board.h, board.w);
+    const data = img.data;
+    let cell = 0;
+    for (let i = 0; i < img_size; i += 4) {
+        data[i + 0] = 0;
+        data[i + 1] = board.data[cell] ? 255 : 0;
+        data[i + 2] = board.data[cell] ? 0 : 255;
+        data[i + 3] = 255;
+        cell++;
+    }
+    ctx.putImageData(img, 0, 0);
+}
+
+function render2(ctx, board) {
     for (let y = 0; y < board.h; y++) {
         for (let x = 0; x < board.w; x++) {
             if (board.data[y * board.w + x]) {
@@ -45,13 +61,13 @@ function time(el, cb) {
 
 function step(ctx, board, timestamp) {
     time(elements.metrics.update, () => _goli_step(board.data, board.x, board.y));
-    time(elements.metrics.render, () => render(ctx, board, timestamp));
+    time(elements.metrics.render, () => render(ctx, board));
 }
 
 function loop(state, ctx, board) {
     if (state.running) {
         window.requestAnimationFrame((timestamp) => {
-            step(ctx, board, timestamp);
+            time(elements.metrics.total, () => step(ctx, board, timestamp));
             loop(state, ctx, board);
         })
     }
@@ -72,7 +88,7 @@ function main() {
     set_canvas_size(elements.canvas, board);
     const ctx = elements.canvas.getContext("2d");
 
-    render(ctx, board, performance.now());
+    render(ctx, board);
     elements.controls.step_button.addEventListener("click", () => {
         board.data = new Uint8Array(Module.buffer, _goli_get_board())
         step(ctx, board, performance.now());
