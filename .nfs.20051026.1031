@@ -1,8 +1,8 @@
 const style = {
     cell: {
         size: 1,
-        alive: [0, 100, 0, 255],
-        dead: [255, 255, 255, 255],
+        alive: 'green',
+        dead: 'blue'
     }
 };
 
@@ -21,24 +21,50 @@ const elements = {
 
 const state = {
     running: false,
-    // fps: 1 TODO: limit FPS
+    // fps: 1
 };
 
 function render(ctx, board) {
-    const img_size = board.h * board.w * 4;
-    const img = ctx.getImageData(0, 0, board.h, board.w);
+    const pixels = board.h * board.w;
+    const img = ctx.getImageData(0, 0, pixels / board.w, pixels / board.h);
     const data = img.data;
+    const data_size = pixels * 4;
     let cell = 0;
-    for (let i = 0; i < img_size; i += 4) {
-        const rgb = style.cell[board.data[cell] ? 'alive' : 'dead'];
-        data[i + 0] = rgb[0];
-        data[i + 1] = rgb[1];
-        data[i + 2] = rgb[2];
-        data[i + 3] = rgb[3];
+    for (let i = 0; i < data_size; i += 4) {
+        data[i + 0] = 0;
+        data[i + 1] = board.data[cell] ? 255 : 0;
+        data[i + 2] = board.data[cell] ? 0 : 255;
+        data[i + 3] = 255;
         cell++;
     }
     ctx.putImageData(img, 0, 0);
 }
+
+function render1(ctx, board) {
+    const pixels = board.h * board.w * style.cell.size;
+    const img = ctx.getImageData(0, 0, board.w * style.cell.size, board.h * style.cell.size);
+    const data = img.data;
+    const data_size = pixels * 4;
+    const n_cells = board.w * board.h;
+
+    const blue = [0, 0, 255, 255];
+    for (let cell = 0; cell < n_cells; cell++) {
+        let cur = cell * style.cell.size * 4;
+        const w = style.cell.size;
+        for (let y = 0; y < w; y++) {
+            for (let x = 0; x < w; x++, cur += 3) {
+                data[cur + x + 0] = blue[0]
+                data[cur + x + 1] = blue[1];
+                data[cur + x + 2] = blue[2];
+                data[cur + x + 3] = blue[3];
+            }
+            cur = y * board.w * style.cell.size * 4 + cell * style.cell.size * 4;
+        }
+    }
+    console.log(data);
+    ctx.putImageData(img, 0, 0);
+}
+
 
 function render1(ctx, board) {
     for (let y = 0; y < board.h; y++) {
