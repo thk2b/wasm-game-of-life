@@ -6,11 +6,22 @@
 
 #include <emscripten/emscripten.h>
 
-static uint8_t *worlds[2];
+static uint8_t *worlds[2]= {NULL};
 static size_t world_width;
 static size_t world_height;
 static size_t world_size;
 static size_t active_world = 0;
+
+
+/*
+Populate world
+*/
+EMSCRIPTEN_KEEPALIVE
+void populate(void) {
+	uint8_t *world = worlds[active_world];
+	memset(world + (world_height / 2 * world_width),
+		1, world_width * sizeof(uint8_t));
+}
 
 /*
 Allocate worlds
@@ -26,6 +37,7 @@ int goli_init_world(size_t w, size_t h) {
 		printf("ERROR: Out of memory\n");
 		return 1;
 	}
+	populate();
 	return 0;
 }
 
@@ -39,6 +51,7 @@ void goli_reset_world() {
 	world_width = 0;
 	world_height = 0;
 	world_size = 0;
+	active_world = 0;
 }
 
 /*
@@ -47,15 +60,40 @@ Allocates a x * y * 4 RGB world image data buffer
 EMSCRIPTEN_KEEPALIVE
 uint8_t *goli_get_image_buffer(void) {
 	uint8_t *b = malloc(world_size * sizeof(uint8_t) * 4);
-	memset(b, 0, world_size * sizeof(uint8_t) * 4);
+	size_t limit = world_size * 4;
+	for (size_t i = 0; i < limit; i += 4) {
+		b[i + 0] = 0;
+		b[i + 1] = 0;
+		b[i + 2] = 255;
+		b[i + 3] = 255;
+	}
+	printf("init %p\n", b);
 	return b;
 }
 
 /*
 Render the current world state on a world_size * 4 RGB image data buffer
 */
-void goli_render(uint8_t *img) {
-	memset(img, 0, world_size * sizeof(uint8_t) * 4);
+uint8_t *goli_render(uint8_t *img) {
+	printf("render %p\n", img);
+	size_t limit = world_size * 4;
+	uint8_t *world = worlds[active_world];
+	size_t c = 0;
+	for (size_t i = 0; i < limit; i += 4, c++) {
+		if (world[c]) {
+			img[i + 0] = 0;
+			img[i + 1] = 255;
+			img[i + 2] = 0;
+			img[i + 3] = 255;
+		} else {
+			img[i + 0] = 0;
+			img[i + 1] = 0;
+			img[i + 2] = 255;
+			img[i + 3] = 255;
+		}
+	}
+	return img;
+	// memset(img, 0, world_size * sizeof(uint8_t) * 4);
 }
 
 /* represents the 8 directions [y, x]*/
@@ -124,8 +162,5 @@ void goli_update(void) {
 		}
 	}
 	active_world = !active_world;
-}
-
-int main() {
-	printf("Running...\n");
+	printf("update\n");
 }

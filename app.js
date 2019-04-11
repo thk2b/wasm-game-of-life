@@ -24,67 +24,55 @@ const state = {
     // fps: 1 TODO: limit FPS
 };
 
-function render(ctx, board) {
-    const img_size = board.h * board.w * 4;
-    const img = ctx.getImageData(0, 0, board.h, board.w);
-    const data = img.data;
-    let cell = 0;
-    for (let i = 0; i < img_size; i += 4) {
-        const rgb = style.cell[board.data[cell] ? 'alive' : 'dead'];
-        data[i + 0] = rgb[0];
-        data[i + 1] = rgb[1];
-        data[i + 2] = rgb[2];
-        data[i + 3] = rgb[3];
-        cell++;
-    }
-    ctx.putImageData(img, 0, 0);
+function render(ctx, world) {
+    console.log(_goli_render(world.data_offset));
+    console.log(world.data);
+    ctx.putImageData(new ImageData(world.data, world.w, world.h), 0, 0);
 }
 
-function step(ctx, board) {
-    time(elements.metrics.update, () => _goli_step(board.data, board.x, board.y));
-    time(elements.metrics.render, () => _goli_render(ctx, board));
+function step(ctx, world) {
+    time(elements.metrics.render, () => render(ctx, world));
+    time(elements.metrics.update, () => _goli_update(world.data, world.x, world.y));
 }
 
-function loop(state, ctx, board) {
+function loop(state, ctx, world) {
     if (state.running) {
         window.requestAnimationFrame((timestamp) => {
-            time(elements.metrics.total, () => step(ctx, board, timestamp));
-            loop(state, ctx, board);
+            time(elements.metrics.total, () => step(ctx, world, timestamp));
+            loop(state, ctx, world);
         })
     }
 }
 
-function set_canvas_size(cvs, board) {
-    cvs.width = board.w * style.cell.size;
-    cvs.height = board.h * style.cell.size;
+function set_canvas_size(cvs, world) {
+    cvs.width = world.w * style.cell.size;
+    cvs.height = world.h * style.cell.size;
 }
 
 function main() {
-    _goli_init();
-    const board = {
-        data: new Uint8Array(Module.buffer, _goli_get_board()),
-        w: _goli_get_width(),
-        h: _goli_get_height(),
+    _goli_init_world(1000, 1000);
+    const [w, h] = [1000, 1000];
+    const data_offset = _goli_get_image_buffer();
+    const world = {
+        w, h,
+        data_offset,
+        data: new Uint8ClampedArray(
+            Module.buffer, data_offset,
+            w * h * 4
+        )
     };
-    set_canvas_size(elements.canvas, board);
+    console.log(world.data);
+    set_canvas_size(elements.canvas, world);
     const ctx = elements.canvas.getContext("2d");
 
-    // render(ctx, board);
-    const imgData = ctx.getImageData(0, 0, board.w, board.h);
-    const data = new Uint8ClampedArray(Module.buffer, Module._goli_alloc_board(), board.w * board.h * 4);
-    // console.log(_goli_render(data, data.length));
-    // imgData.data = data;
-    console.log(data);
-    ctx.putImageData(new ImageData(data, board.w, board.h), 0, 0);
     elements.controls.step_button.addEventListener("click", () => {
-        board.data = new Uint8Array(Module.buffer, _goli_get_board())
-        step(ctx, board, performance.now());
+        step(ctx, world, performance.now());
     });
 
     elements.controls.run_button.addEventListener("click", () => {
         state.running = !state.running;
         if (state.running) {
-            loop(state, ctx, board);
+            loop(state, ctx, world);
         }
     });
 }
