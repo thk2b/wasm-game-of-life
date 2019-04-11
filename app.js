@@ -1,8 +1,6 @@
 const style = {
     cell: {
-        size: 1,
-        alive: [0, 100, 0, 255],
-        dead: [255, 255, 255, 255],
+        size: 1, // TODO: handle different cell sizes
     }
 };
 
@@ -21,12 +19,11 @@ const elements = {
 
 const state = {
     running: false,
-    // fps: 1 TODO: limit FPS
+    fps: 1 // TODO: limit FPS
 };
 
 function render(ctx, world) {
-    console.log(_goli_render(world.data_offset));
-    console.log(world.data);
+    _goli_render(world.data_offset);
     ctx.putImageData(new ImageData(world.data, world.w, world.h), 0, 0);
 }
 
@@ -50,8 +47,9 @@ function set_canvas_size(cvs, world) {
 }
 
 function main() {
-    _goli_init_world(1000, 1000);
-    const [w, h] = [1000, 1000];
+    const size = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight -200;
+    const [w, h] = [size, size];
+    _goli_init_world(w, h);
     const data_offset = _goli_get_image_buffer();
     const world = {
         w, h,
@@ -61,9 +59,9 @@ function main() {
             w * h * 4
         )
     };
-    console.log(world.data);
     set_canvas_size(elements.canvas, world);
     const ctx = elements.canvas.getContext("2d");
+    render(ctx, world);
 
     elements.controls.step_button.addEventListener("click", () => {
         step(ctx, world, performance.now());

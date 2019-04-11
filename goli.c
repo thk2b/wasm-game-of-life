@@ -6,21 +6,27 @@
 
 #include <emscripten/emscripten.h>
 
+/*
+Worlds contains binary data, 1 if the cell is alive else 0.
+We need 2 boards because updating the state of a cell in place would affect
+its neighbors's state recomputations.
+*/
 static uint8_t *worlds[2]= {NULL};
 static size_t world_width;
 static size_t world_height;
 static size_t world_size;
 static size_t active_world = 0;
 
-
 /*
-Populate world
+Set world state to a line in the center
 */
 EMSCRIPTEN_KEEPALIVE
 void populate(void) {
 	uint8_t *world = worlds[active_world];
-	memset(world + (world_height / 2 * world_width),
-		1, world_width * sizeof(uint8_t));
+	memset(world, 0, world_size * sizeof(uint8_t));
+	memset(world + ((world_height / 2 - 1) * world_width), 1, world_width * sizeof(uint8_t));
+	memset(world + (world_height / 2 * world_width), 1, world_width * sizeof(uint8_t));
+	memset(world + ((world_height / 2 + 1) * world_width), 1, world_width * sizeof(uint8_t));
 }
 
 /*
@@ -67,33 +73,31 @@ uint8_t *goli_get_image_buffer(void) {
 		b[i + 2] = 255;
 		b[i + 3] = 255;
 	}
-	printf("init %p\n", b);
 	return b;
+}
+
+static void set_pixel(uint8_t *pixel, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+	pixel[0] = r;
+	pixel[1] = g;
+	pixel[2] = b;
+	pixel[3] = a;
 }
 
 /*
 Render the current world state on a world_size * 4 RGB image data buffer
 */
 uint8_t *goli_render(uint8_t *img) {
-	printf("render %p\n", img);
 	size_t limit = world_size * 4;
 	uint8_t *world = worlds[active_world];
 	size_t c = 0;
 	for (size_t i = 0; i < limit; i += 4, c++) {
 		if (world[c]) {
-			img[i + 0] = 0;
-			img[i + 1] = 255;
-			img[i + 2] = 0;
-			img[i + 3] = 255;
+			set_pixel(img + i, 0, 125, 125, 255);
 		} else {
-			img[i + 0] = 0;
-			img[i + 1] = 0;
-			img[i + 2] = 255;
-			img[i + 3] = 255;
+			set_pixel(img + i, 0, 0, 0, 255);
 		}
 	}
 	return img;
-	// memset(img, 0, world_size * sizeof(uint8_t) * 4);
 }
 
 /* represents the 8 directions [y, x]*/
@@ -148,6 +152,9 @@ static inline void update_dead_cell(uint8_t *world, uint8_t *next_world, size_t 
 	}
 }
 
+/*
+Given current world state, update the other board with the next and make it active
+*/
 EMSCRIPTEN_KEEPALIVE
 void goli_update(void) {
 	uint8_t *world = worlds[active_world];
@@ -162,5 +169,4 @@ void goli_update(void) {
 		}
 	}
 	active_world = !active_world;
-	printf("update\n");
 }
