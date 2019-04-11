@@ -16,3 +16,9 @@ Overall, this demonstrates sharing memory between JavaScript and wasm: the wasm 
 The simulation is very performant, running at around 30FPS with a 2000 X 2000 world size on Chrome 73.
 
 Further performance optimizations are possible.
+
+## Building
+
+To build, install and activate the emscripten SDK
+
+Then run `make build`, `make serve`, and navigate to `localhost:8080`.
