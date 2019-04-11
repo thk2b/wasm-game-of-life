@@ -66,13 +66,7 @@ Allocates a x * y * 4 RGB world image data buffer
 EMSCRIPTEN_KEEPALIVE
 uint8_t *goli_get_image_buffer(void) {
 	uint8_t *b = malloc(world_size * sizeof(uint8_t) * 4);
-	size_t limit = world_size * 4;
-	for (size_t i = 0; i < limit; i += 4) {
-		b[i + 0] = 0;
-		b[i + 1] = 0;
-		b[i + 2] = 255;
-		b[i + 3] = 255;
-	}
+	memset(b, 0, world_size * sizeof(uint8_t) * 4);
 	return b;
 }
 
