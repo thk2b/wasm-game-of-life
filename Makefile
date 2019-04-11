@@ -1,6 +1,6 @@
 build:
-	emcc goli.c -s WASM=1 -O3 \
-	-s EXPORTED_FUNCTIONS="['_goli_get_board', '_goli_init', '_goli_step', '_goli_get_width', '_goli_get_height']" \
+	emcc goli.c -s WASM=1 -O2 \
+	-s EXPORTED_FUNCTIONS="['_goli_get_board', '_goli_init', '_goli_step', '_goli_get_width', '_goli_get_height', '_goli_render', '_goli_alloc_board']" \
 	-s EXTRA_EXPORTED_RUNTIME_METHODS="['ccall', 'cwrap']" \
 	-o index.js
 

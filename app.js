@@ -89,7 +89,13 @@ function main() {
     set_canvas_size(elements.canvas, board);
     const ctx = elements.canvas.getContext("2d");
 
-    render(ctx, board);
+    // render(ctx, board);
+    const imgData = ctx.getImageData(0, 0, board.w, board.h);
+    const data = new Uint8ClampedArray(Module.buffer, Module._goli_alloc_board(), board.w * board.h * 4);
+    // console.log(_goli_render(data, data.length));
+    // imgData.data = data;
+    console.log(data);
+    ctx.putImageData(new ImageData(data, board.w, board.h), 0, 0);
     elements.controls.step_button.addEventListener("click", () => {
         board.data = new Uint8Array(Module.buffer, _goli_get_board())
         step(ctx, board, performance.now());

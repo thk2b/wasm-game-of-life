@@ -6,8 +6,8 @@
 
 #include <emscripten/emscripten.h>
 
-#define WIDTH 2000
-#define HEIGHT 2000
+#define WIDTH 200
+#define HEIGHT 200
 #define BOARD_SIZE (WIDTH * HEIGHT)
 
 static uint8_t boards[2][BOARD_SIZE];
@@ -88,6 +88,13 @@ static inline void update_dead_cell(uint8_t *board, uint8_t *next_board, size_t 
 }
 
 EMSCRIPTEN_KEEPALIVE
+uint8_t *goli_alloc_board(void) {
+	uint8_t *b = malloc(BOARD_SIZE * sizeof(uint8_t) * 4);
+	memset(b, 125, BOARD_SIZE * sizeof(uint8_t) * 4);
+	return b;
+}
+
+EMSCRIPTEN_KEEPALIVE
 void goli_step(void) {
 	uint8_t *board = boards[active_board_idx];
 	uint8_t *next_board = boards[!active_board_idx];
@@ -101,6 +108,15 @@ void goli_step(void) {
 		}
 	}
 	active_board_idx = !active_board_idx;
+}
+
+EMSCRIPTEN_KEEPALIVE
+uint8_t *goli_render(uint8_t *img, size_t size) {
+	printf("%zu\n", size);
+	// memset(img, 255, size);
+	img[0] = 1;
+	printf("%u\n", img[0]);
+	return img;
 }
 
 int main() {
