@@ -5,7 +5,7 @@ The aim of this project is to explore the capabilities of web assembly. It uses 
 
 ## Architecture
 
-The C source code does the heavy lifting: `goli_update` computes the next state of the world, and `goli_render` sets pixels in the canvas image buffer based on the world state.
+The C source code does the heavy lifting: `goli_update` computes the next state of the world, and `goli_render` sets pixels in the canvas image buffer to represent the world state.
 
 The JavaScript app handles the app lifecycle and user interaction. It is responsible for initializing the worlds and the image buffer. It handles user input and runs the main loop, which calls the C functions. The render function, on the javascript side, calls `ctx.putImageData` with the updated image buffer to update the canvas.
 
