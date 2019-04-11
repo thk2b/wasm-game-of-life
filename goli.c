@@ -70,6 +70,11 @@ uint8_t *goli_get_image_buffer(void) {
 	return b;
 }
 
+EMSCRIPTEN_KEEPALIVE
+void goli_free_image_buffer(uint8_t *img) {
+	free(img);
+}
+
 static void set_pixel(uint8_t *pixel, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 	pixel[0] = r;
 	pixel[1] = g;

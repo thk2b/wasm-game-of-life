@@ -8,6 +8,9 @@ const elements = {
     controls: {
         step_button: document.getElementById("controls_step"),
         run_button: document.getElementById("controls_run"),
+        restart_button: document.getElementById("controls_restart"),
+        width_input: document.getElementById("controls_width"),
+        height_input: document.getElementById("controls_height"),
     },
     canvas: document.getElementById("canvas"),
     metrics: {
@@ -17,10 +20,7 @@ const elements = {
     }
 };
 
-const state = {
-    running: false,
-    fps: 1 // TODO: limit FPS
-};
+
 
 function render(ctx, world) {
     _goli_render(world.data_offset);
@@ -46,9 +46,7 @@ function set_canvas_size(cvs, world) {
     cvs.height = world.h * style.cell.size;
 }
 
-function main() {
-    const size = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight -200;
-    const [w, h] = [size, size];
+function init(w, h) {
     _goli_init_world(w, h);
     const data_offset = _goli_get_image_buffer();
     const world = {
@@ -59,20 +57,47 @@ function main() {
             w * h * 4
         )
     };
+    const state = {
+        running: false,
+        fps: 1 // TODO: limit FPS
+    };
     set_canvas_size(elements.canvas, world);
     const ctx = elements.canvas.getContext("2d");
     render(ctx, world);
 
-    elements.controls.step_button.addEventListener("click", () => {
+    const on_step_click = () => {
         step(ctx, world, performance.now());
-    });
-
-    elements.controls.run_button.addEventListener("click", () => {
+    };
+    elements.controls.step_button.addEventListener("click", on_step_click);
+    
+    const on_run_click = () => {
         state.running = !state.running;
         if (state.running) {
             loop(state, ctx, world);
         }
-    });
+    };
+    elements.controls.run_button.addEventListener("click", on_run_click);
+    return () => {
+        state.running = false;
+        elements.controls.step_button.removeEventListener("click", on_step_click);
+        elements.controls.run_button.removeEventListener("click", on_run_click);
+        _goli_reset_world();
+        _goli_free_image_buffer(world.data_offset);
+    }
+}
+
+function main() {
+    const size = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight -200;
+    elements.controls.width_input.value = size;
+    elements.controls.height_input.value = size;
+    let reset = init(size, size);
+    
+    elements.controls.restart_button.addEventListener("click", () => {
+        reset();
+        reset = init(
+            elements.controls.width_input.value,
+            elements.controls.height_input.value);
+    })
 }
 
 Module.postRun.push(main);
