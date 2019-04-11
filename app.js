@@ -40,29 +40,9 @@ function render(ctx, board) {
     ctx.putImageData(img, 0, 0);
 }
 
-function render1(ctx, board) {
-    for (let y = 0; y < board.h; y++) {
-        for (let x = 0; x < board.w; x++) {
-            if (board.data[y * board.w + x]) {
-                ctx.fillStyle = style.cell.alive;
-            } else {
-                ctx.fillStyle = style.cell.dead;
-            }
-            ctx.fillRect(x * style.cell.size, y * style.cell.size, style.cell.size, style.cell.size);
-        }
-    }
-}
-
-function time(el, cb) {
-    const begin = performance.now();
-    cb();
-    const ms = performance.now() - begin;
-    el.innerHTML = ms.toString();
-}
-
-function step(ctx, board, timestamp) {
+function step(ctx, board) {
     time(elements.metrics.update, () => _goli_step(board.data, board.x, board.y));
-    time(elements.metrics.render, () => render(ctx, board));
+    time(elements.metrics.render, () => _goli_render(ctx, board));
 }
 
 function loop(state, ctx, board) {
@@ -110,3 +90,10 @@ function main() {
 }
 
 Module.postRun.push(main);
+
+function time(el, cb) {
+    const begin = performance.now();
+    cb();
+    const ms = performance.now() - begin;
+    el.innerHTML = ms.toString();
+}
